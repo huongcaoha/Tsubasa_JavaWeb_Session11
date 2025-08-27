@@ -1,6 +1,6 @@
 package com.ra.session11.controller;
 
-import com.ra.session11.model.dto.UserLogin;
+import com.ra.session11.model.dto.UserLoginDTO;
 import com.ra.session11.model.dto.UserRegisterDTO;
 import com.ra.session11.model.entity.User;
 import com.ra.session11.service.UserService;
@@ -23,23 +23,18 @@ public class UserController {
 
     @GetMapping("/login")
     public String login(Model model) {
-        model.addAttribute("userLogin" , new UserLogin());
+        model.addAttribute("userLogin" , new UserLoginDTO());
         return "auth/login";
     }
 
     @PostMapping("/login")
-    public String handleLogin(HttpServletResponse response, @Valid @ModelAttribute UserLogin userLogin, BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
+    public String handleLogin(HttpServletResponse response, @Valid @ModelAttribute UserLoginDTO userLogin, BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("userLogin" , userLogin);
             return "auth/login";
         }
         User user = userService.login(userLogin);
         if (user != null) {
-           Cookie cookie = new Cookie("user", user.getUsername());
-           cookie.setPath("/");
-           cookie.setMaxAge(60*60*24);
-           response.addCookie(cookie);
-
             model.addAttribute("user" , user);
             return "redirect:/";
         }else {
@@ -78,10 +73,7 @@ public class UserController {
 
     @GetMapping("/logout")
     public String logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("user", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+        userService.logout();
         return "redirect:/auth/login";
     }
 

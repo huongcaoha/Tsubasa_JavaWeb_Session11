@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @Data
 @Builder
-public class UserLogin {
+public class UserLoginDTO {
     @NotBlank(message = "username can not blank")
     private String username;
     @NotBlank(message = "password can not blank")

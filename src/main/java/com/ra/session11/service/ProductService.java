@@ -18,8 +18,8 @@ public class ProductService {
     private CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
-    public List<Product> findAll() {
-        return productRepository.products();
+    public List<Product> findAll(String searchNameProduct) {
+        return productRepository.products(searchNameProduct);
     }
 
     @Transactional(readOnly = true)

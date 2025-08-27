@@ -24,10 +24,18 @@ public class ProductRepository {
         }
     }
 
-    public List<Product> products() {
+    public List<Product> products(String searchNameProduct) {
         try (Session session = sessionFactory.openSession()) {
             session.beginTransaction();
-            List<Product> products = session.createQuery("from Product", Product.class).getResultList();
+            List<Product> products ;
+            if (searchNameProduct == null || searchNameProduct.isEmpty()) {
+                products = session.createQuery("from Product", Product.class).getResultList();
+            }else {
+               products = session.createQuery("from Product p where p.productName like concat('%',:search,'%') ", Product.class)
+                       .setParameter("search",searchNameProduct)
+                       .getResultList();
+            }
+
             session.getTransaction().commit();
             return products;
         }catch (Exception e) {

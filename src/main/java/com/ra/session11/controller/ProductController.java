@@ -2,6 +2,8 @@ package com.ra.session11.controller;
 
 import com.ra.session11.model.dto.ProductDTO;
 import com.ra.session11.model.entity.Product;
+import com.ra.session11.model.entity.User;
+import com.ra.session11.model.entity.UserLogin;
 import com.ra.session11.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -25,34 +27,26 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping
-    public String listProducts(Model model, HttpServletRequest request) {
-        String isLogin = checkLogin(request);
+    public String listProducts(Model model , @RequestParam(name = "searchNameProduct",required = false) String searchNameProduct) {
+        String isLogin = checkLogin();
         if (isLogin != null) return isLogin;
 
-        model.addAttribute("products", productService.findAll());
+        model.addAttribute("products", productService.findAll(searchNameProduct));
+        model.addAttribute("search" ,searchNameProduct);
         return "/product/productList"; // Tên của trang JSP để hiển thị danh sách sản phẩm
     }
 
-    private static String checkLogin(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        String username = null ;
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("user")) {
-                    username = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        if (username == null) {
+    private static String checkLogin() {
+        User userLogin = UserLogin.user;
+        if (userLogin == null) {
             return "redirect:/auth/login";
         }
         return null;
     }
 
     @GetMapping("/add")
-    public String showAddProductForm(Model model,HttpServletRequest request) {
-        String isLogin = checkLogin(request);
+    public String showAddProductForm(Model model) {
+        String isLogin = checkLogin();
         if (isLogin != null) return isLogin;
 
         model.addAttribute("product", new ProductDTO());
@@ -61,8 +55,8 @@ public class ProductController {
 
     @PostMapping("/add")
     public String addProduct(@Valid @ModelAttribute("product") ProductDTO productDTO, BindingResult bindingResult,
-                             RedirectAttributes redirectAttributes, Model model,HttpServletRequest request) {
-        String isLogin = checkLogin(request);
+                             RedirectAttributes redirectAttributes, Model model) {
+        String isLogin = checkLogin();
         if (isLogin != null) return isLogin;
 
         if (productDTO.getImage() == null || productDTO.getImage().isEmpty()) {
@@ -85,8 +79,8 @@ public class ProductController {
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditProductForm(@PathVariable Long id, Model model,HttpServletRequest request) {
-        String isLogin = checkLogin(request);
+    public String showEditProductForm(@PathVariable Long id, Model model) {
+        String isLogin = checkLogin();
         if (isLogin != null) return isLogin;
         // Lấy thông tin sản phẩm theo id
         Product product = productService.findById(id);
@@ -122,23 +116,15 @@ public class ProductController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteProduct(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes,
-                                HttpServletRequest request) {
+    public String deleteProduct(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes
+                               ) {
         // Kiểm tra quyền truy cập: chỉ cho phép người dùng đã đăng nhập
-        String isLogin = checkLogin(request);
+        String isLogin = checkLogin();
         if (isLogin != null) return isLogin;
-        Product product = productService.findById(id);
 
         // Xóa sản phẩm khỏi cơ sở dữ liệu
        boolean rs = productService.deleteById(id);
         if (rs){
-            List<Product> products = new ArrayList<>();
-            List<Product> deletedProducts = (List<Product>) session.getAttribute("deletedProducts");
-            if (deletedProducts != null) {
-                products = deletedProducts;
-            }
-            products.add(product);
-            session.setAttribute("deletedProducts", products);
             redirectAttributes.addFlashAttribute("message", "Xóa sản phẩm thành công!");
         }else {
             redirectAttributes.addFlashAttribute("message", "Product deleted failed");
@@ -147,11 +133,5 @@ public class ProductController {
         return "redirect:/products"; // Chuyển hướng về danh sách sản phẩm
     }
 
-    @GetMapping("/listProductDelete")
-    public String listDeletedProducts(HttpSession session, Model model) {
 
-        List<Product> deletedProducts = (List<Product>) session.getAttribute("deletedProducts");
-        model.addAttribute("deletedProducts", deletedProducts != null ? deletedProducts : new ArrayList<>());
-        return "/product/listProductDelete"; // Trả về view listProductDelete.jsp
-    }
 }

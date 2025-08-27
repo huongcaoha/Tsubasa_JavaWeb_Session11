@@ -1,8 +1,9 @@
 package com.ra.session11.service;
 
-import com.ra.session11.model.dto.UserLogin;
+import com.ra.session11.model.dto.UserLoginDTO;
 import com.ra.session11.model.dto.UserRegisterDTO;
 import com.ra.session11.model.entity.User;
+import com.ra.session11.model.entity.UserLogin;
 import com.ra.session11.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,12 @@ public class UserService {
     }
 
     @Transactional
-    public User login(UserLogin userLogin) {
-        return userRepository.login(userLogin.getUsername(), userLogin.getPassword());
+    public User login(UserLoginDTO userLogin) {
+        User user =  userRepository.login(userLogin.getUsername(), userLogin.getPassword());
+        if (user != null) {
+            UserLogin.user = user;
+        }
+        return user;
     }
 
     @Transactional
@@ -39,5 +44,9 @@ public class UserService {
             user.setAvatar(urlImage);
         }
         return userRepository.register(user);
+    }
+
+    public void logout(){
+        UserLogin.user = null;
     }
 }
